@@ -1,7 +1,7 @@
 import * as codepipeline from '@aws-cdk/aws-codepipeline';
 import * as codepipeline_actions from '@aws-cdk/aws-codepipeline-actions';
 import { Construct, SecretValue, Stack, StackProps, Environment } from '@aws-cdk/core';
-import { CdkPipeline, SimpleSynthAction, ShellScriptAction } from '@aws-cdk/pipelines';
+import { CdkPipeline, CdkStage, SimpleSynthAction, ShellScriptAction } from '@aws-cdk/pipelines';
 import { CdkpipelinesDemoStage } from './cdkpipelines-demo-stage';
 
 /**
@@ -40,19 +40,19 @@ export class CdkpipelinesDemoPipelineStack extends Stack {
         });
 
         // This is where we add the application stages
-        // ...
+        const preProd = pipeline.addStage('PreProd');
+        this.addApplicationStack(pipeline, preProd, 'PreProd', { account: '506729077343', region: 'eu-west-3' });
 
-        // This is where we add the application stages
-        
-        this.addStage(pipeline, 'PreProd', { account: '506729077343', region: 'eu-west-3' });
-        this.addStage(pipeline, 'Prod', { account: '310767087164', region: 'us-west-2' });
+        const prod = pipeline.addStage('Prod');
+        this.addApplicationStack(pipeline, prod, 'Prod-us-west-2', { account: '310767087164', region: 'us-west-2' });
+        this.addApplicationStack(pipeline, prod, 'Prod-us-east-2', { account: '310767087164', region: 'us-east-2' });
     }
 
-    addStage(pipeline: CdkPipeline, name: string, env: Environment) {
+    addApplicationStack(pipeline: CdkPipeline, stage: CdkStage, name: string, env: Environment) {
         const app = new CdkpipelinesDemoStage(this, name, { env });
-        const stage = pipeline.addApplicationStage(app);
+        stage.addApplication(app);
         stage.addActions(new ShellScriptAction({
-            actionName: 'TestService',
+            actionName: `${name}-Test`,
             useOutputs: {
                 // Get the stack Output from the Stage and make it available in
                 // the shell script as $ENDPOINT_URL.
