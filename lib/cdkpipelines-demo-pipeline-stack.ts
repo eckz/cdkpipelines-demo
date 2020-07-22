@@ -59,6 +59,7 @@ export class CdkpipelinesDemoPipelineStack extends Stack {
                 ENDPOINT_URL: pipeline.stackOutput(app.urlOutput),
             },
             commands: [
+                'echo Testing $ENDPOINT_URL',
                 // Use 'curl' to GET the given URL and fail if it returns an error
                 'curl -Ssf $ENDPOINT_URL',
             ],
